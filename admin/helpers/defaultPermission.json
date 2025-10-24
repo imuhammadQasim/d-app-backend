@@ -1,0 +1,154 @@
+[
+  {
+    "route": "/dashboard",
+    "description": "Can View the dashboard page in side nav",
+    "can": "dashboard.nav",
+    "parent": [
+      "$"
+    ]
+  },
+  {
+    "route": "/admins",
+    "description": "Can View the admins page in side nav",
+    "can": "admins.nav",
+    "parent": [
+      "$"
+    ]
+  },
+  {
+    "route": "/admins/delete-admin",
+    "description": "Can delete an admin",
+    "can": "admins.delete",
+    "parent": [
+      "admins"
+    ]
+  },
+  {
+    "route": "/admins/edit-admin",
+    "description": "Can edit details of an admin",
+    "can": "admins.edit",
+    "parent": [
+      "admins"
+    ]
+  },
+  {
+    "route": "/admins/update-password",
+    "description": "Can Update his password",
+    "can": "admins.update-password",
+    "parent": [
+      "admins"
+    ]
+  },
+  {
+    "route": "/admins/add-admin",
+    "description": "Can add new admin",
+    "can": "admins.create",
+    "parent": [
+      "admins"
+    ]
+  },
+  {
+    "route": "/permissions",
+    "description": "Can view the permissions in side nav",
+    "can": "permissions.nav",
+    "parent": [
+      "$"
+    ]
+  },
+  {
+    "route": "/permissions/add-permission",
+    "description": "Can add new permission",
+    "can": "permissions.create",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/roles",
+    "description": "Can view the roles in side nav",
+    "can": "roles.nav",
+    "parent": [
+      "$"
+    ]
+  },
+  {
+    "route": "/roles/delete-role",
+    "description": "Can delete role",
+    "can": "roles.delete",
+    "parent": [
+      "roles"
+    ]
+  },
+  {
+    "route": "/roles/restore-role",
+    "description": "Can restore role",
+    "can": "roles.restore",
+    "parent": [
+      "roles"
+    ]
+  },
+  {
+    "route": "/roles/edit-role",
+    "description": "Can edit details of role",
+    "can": "roles.edit",
+    "parent": [
+      "roles"
+    ]
+  },
+  {
+    "route": "/roles/add-role",
+    "description": "Can add new role",
+    "can": "roles.create",
+    "parent": [
+      "roles"
+    ]
+  },
+  {
+    "route": "/permissions/restore-permission",
+    "description": "Can restore permission",
+    "can": "permissions.restore",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/permissions/delete-permission",
+    "description": "Can delete permission",
+    "can": "permissions.delete",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/permissions/edit-permission",
+    "description": "Can edit details of permission",
+    "can": "permissions.edit",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/permissions/feature",
+    "description": "Can add multiple permissions in json formate",
+    "can": "permissions.feature.create",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/permissions/load",
+    "description": "Can load default permissions in db",
+    "can": "permissions.load",
+    "parent": [
+      "permissions"
+    ]
+  },
+  {
+    "route": "/users",
+    "description": "Can view users in nav",
+    "can": "users.nav",
+    "parent": [
+      "$"
+    ]
+  }
+]

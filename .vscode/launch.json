@@ -1,0 +1,44 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MAIN",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "preLaunchTask": "Run Backend - DEV",
+      "type": "node"
+    },
+    {
+      "name": "USER SERVICE",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "dev-user"
+      ],
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
+      "name": "ADMIN SERVICE",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "dev-admin"
+      ],
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+  ]
+}
