@@ -1,0 +1,119 @@
+image: node:20
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: Copy Files to Server
+          script:
+            - pipe: atlassian/scp-deploy:0.3.3
+              variables:
+                USER: $USER
+                SERVER: $HOST
+                REMOTE_PATH: /var/www/intd-backend-temp
+                LOCAL_PATH: ./*
+
+      - step:
+          name: Build Docker Images
+          script:
+            - pipe: atlassian/ssh-run:0.8.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $HOST
+                MODE: "command"
+                COMMAND: |
+                  cd /var/www/intd-backend-temp && \
+                  cp /var/www/intd-backend/Dockerfile.* . && \
+                  cp /var/www/intd-backend/user/.env ./user/ && \
+                  cp /var/www/intd-backend/admin/.env ./admin/ && \
+                  docker build -t intd-backend-admin:$BITBUCKET_BUILD_NUMBER -f Dockerfile.admin . && \
+                  docker build -t intd-backend-user:$BITBUCKET_BUILD_NUMBER -f Dockerfile.user .
+      - step:
+          name: Backup Old logs
+          script:
+            - pipe: atlassian/ssh-run:0.8.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $HOST
+                MODE: "command"
+                COMMAND: |
+                  chmod +x /etc/opt/logs-rotate.sh
+                  /etc/opt/logs-rotate.sh        
+
+      - step:
+          name: Deploy User App
+          script:
+            - pipe: atlassian/ssh-run:0.8.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $HOST
+                MODE: "command"
+                COMMAND: |
+                  if grep -q "$PORT1" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com; then \
+                    echo "Switching User → PORT3: $PORT3" && \
+                    docker run --name Intd-user-b --log-driver=awslogs --log-opt awslogs-region=us-east-2 --log-opt awslogs-group=Intd-Backend-User-Logs --log-opt awslogs-stream=myapp-$(date +%Y%m%d-%H%M%S) --restart=unless-stopped -d -p $PORT3:$PORT1 --network my-bridge intd-backend-user:$BITBUCKET_BUILD_NUMBER && \
+                    sed -i "s/localhost:$PORT1/localhost:$PORT3/g" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com && \
+                    docker rm -f Intd-user-a || true; \
+                  else \
+                    echo "Switching User → PORT1: $PORT1" && \
+                    docker run --name Intd-user-a --log-driver=awslogs --log-opt awslogs-region=us-east-2 --log-opt awslogs-group=Intd-Backend-User-Logs --log-opt awslogs-stream=myapp-$(date +%Y%m%d-%H%M%S) --restart=unless-stopped -d -p $PORT1:$PORT1 --network my-bridge intd-backend-user:$BITBUCKET_BUILD_NUMBER && \
+                    sed -i "s/localhost:$PORT3/localhost:$PORT1/g" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com && \
+                    docker rm -f Intd-user-b || true; \
+                  fi
+
+      - step:
+          name: Deploy Admin App
+          script:
+            - pipe: atlassian/ssh-run:0.8.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $HOST
+                MODE: "command"
+                COMMAND: |
+                  if grep -q "$PORT2" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com; then \
+                    echo "Switching Admin → PORT4: $PORT4" && \
+                    docker run --name Intd-admin-b --log-driver=awslogs --log-opt awslogs-region=us-east-2 --log-opt awslogs-group=Intd-Backend-Admin-Logs --log-opt awslogs-stream=myapp-$(date +%Y%m%d-%H%M%S) --restart=unless-stopped -d -p $PORT4:$PORT2 --network my-bridge intd-backend-admin:$BITBUCKET_BUILD_NUMBER && \
+                    sed -i "s/localhost:$PORT2/localhost:$PORT4/g" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com && \
+                    docker rm -f Intd-admin-a || true; \
+                  else \
+                    echo "Switching Admin → PORT2: $PORT2" && \
+                    docker run --name Intd-admin-a --log-driver=awslogs --log-opt awslogs-region=us-east-2 --log-opt awslogs-group=Intd-Backend-Admin-Logs --log-opt awslogs-stream=myapp-$(date +%Y%m%d-%H%M%S) --restart=unless-stopped -d -p $PORT2:$PORT2 --network my-bridge intd-backend-admin:$BITBUCKET_BUILD_NUMBER && \
+                    sed -i "s/localhost:$PORT4/localhost:$PORT2/g" /etc/nginx/sites-enabled/backend.internationaldigitaldollar.com && \
+                    docker rm -f Intd-admin-b || true; \
+                  fi
+
+      - step:
+          name: Cleanup & Reload Nginx
+          script:
+            - pipe: atlassian/ssh-run:0.8.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $HOST
+                MODE: "command"
+                COMMAND: |
+                  systemctl reload nginx && \
+                  docker system prune -af || true && \
+                  rm -rf /var/www/intd-backend-temp && \
+                  mkdir -p /var/www/intd-backend-temp
+
+          after-script:
+            - |
+              if [ "$BITBUCKET_EXIT_CODE" -eq 0 ]; then
+                STATUS="SUCCESS ✅"
+              else
+                STATUS="FAILED ❌"
+              fi
+            - pipe: atlassian/email-notify:0.13.2
+              variables:
+                USERNAME: $SMTP_USERNAME
+                PASSWORD: $EMAIL_PASS
+                FROM: "muhammad@webevis.com"
+                TO: "muhammad@webevis.com, abdulqayyum@webevis.com"
+                HOST: "smtp.gmail.com"
+                PORT: "587"
+                SUBJECT: "Deployment - INTD-Backend"
+                BODY_PLAIN: |
+                  Deployment Status: ${STATUS}
+                  Build: $BITBUCKET_BUILD_NUMBER
+                  Branch: $BITBUCKET_BRANCH
+                  Commit: $BITBUCKET_COMMIT
